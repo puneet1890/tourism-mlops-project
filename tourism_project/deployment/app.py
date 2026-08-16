@@ -4,7 +4,6 @@ import joblib
 
 st.title("🌴 Wellness Tourism Package Purchase Predictor")
 
-# Load model
 @st.cache_resource
 def load_model():
     return joblib.load("tourism_project/deployment/best_model.pkl")
@@ -25,6 +24,14 @@ preferred_star = st.sidebar.selectbox("Preferred Hotel Star", [3, 4, 5])
 marital_status = st.sidebar.selectbox("Marital Status", ["Single", "Married", "Divorced", "Unmarried"])
 trips = st.sidebar.number_input("Annual Trips", min_value=0, max_value=50, value=3)
 
+# Additional fields expected by trained model
+passport = st.sidebar.selectbox("Passport Available", [0, 1], index=1)
+own_car = st.sidebar.selectbox("Owns Car", [0, 1], index=1)
+monthly_income = st.sidebar.number_input("Monthly Income", min_value=0, value=20000)
+pitch_satisfaction = st.sidebar.slider("Pitch Satisfaction Score", 1, 5, 3)
+designation = st.sidebar.selectbox("Designation", ["Executive", "Manager", "Senior Manager", "AVP", "VP"])
+children_visiting = st.sidebar.slider("Number of Children Visiting", 0, 5, 1)
+
 input_data = pd.DataFrame([{
     "Age": age,
     "TypeofContact": type_of_contact,
@@ -37,7 +44,13 @@ input_data = pd.DataFrame([{
     "ProductPitched": product_pitched,
     "PreferredPropertyStar": preferred_star,
     "MaritalStatus": marital_status,
-    "NumberOfTrips": trips
+    "NumberOfTrips": trips,
+    "Passport": passport,
+    "OwnCar": own_car,
+    "MonthlyIncome": monthly_income,
+    "PitchSatisfactionScore": pitch_satisfaction,
+    "Designation": designation,
+    "NumberOfChildrenVisiting": children_visiting
 }])
 
 st.subheader("Submitted Input Profile")
