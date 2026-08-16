@@ -58,6 +58,17 @@ st.dataframe(input_data)
 
 if st.button("Predict Likelihood"):
     try:
+        # Add missing index column expected by old pickled model
+        if "Unnamed: 0" not in input_data.columns:
+            input_data["Unnamed: 0"] = 0
+
+        # Auto-fill any other missing feature columns expected by the model
+        if hasattr(model, "feature_names_in_"):
+            for col in model.feature_names_in_:
+                if col not in input_data.columns:
+                    input_data[col] = 0
+            input_data = input_data[model.feature_names_in_]
+
         prediction = model.predict(input_data)
         probability = model.predict_proba(input_data)[0][1] if hasattr(model, "predict_proba") else None
         
