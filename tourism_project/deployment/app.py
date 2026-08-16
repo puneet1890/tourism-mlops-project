@@ -1,63 +1,56 @@
-import os
-import joblib
-import pandas as pd
 import streamlit as st
+import pandas as pd
+import joblib
 
-st.set_page_config(page_title="Wellness Tourism Predictor", layout="wide")
 st.title("🌴 Wellness Tourism Package Purchase Predictor")
 
+# Load model
 @st.cache_resource
 def load_model():
-    model_path = os.path.join(os.path.dirname(__file__), "best_model.pkl")
-    return joblib.load(model_path)
+    return joblib.load("tourism_project/deployment/best_model.pkl")
 
-try:
-    model = load_model()
-    st.sidebar.header("Customer Profile Input")
+model = load_model()
 
-    def user_inputs():
-        age = st.sidebar.number_input("Age", 18, 80, 35)
-        typeofcontact = st.sidebar.selectbox("Type of Contact", ["Self Inquiry", "Company Invited"])
-        citytier = st.sidebar.selectbox("City Tier", [1, 2, 3])
-        duration = st.sidebar.number_input("Pitch Duration (mins)", 1, 120, 15)
-        occupation = st.sidebar.selectbox("Occupation", ["Salaried", "Small Business", "Large Business", "Free Lancer"])
-        gender = st.sidebar.selectbox("Gender", ["Male", "Female"])
-        persons = st.sidebar.slider("Persons Visiting", 1, 10, 2)
-        followups = st.sidebar.slider("Follow-ups", 1, 10, 3)
-        product_pitched = st.sidebar.selectbox("Product Pitched", ["Basic", "Standard", "Deluxe", "Super Deluxe", "King"])
-        preferred_star = st.sidebar.selectbox("Preferred Hotel Star", [3, 4, 5])
-        marital_status = st.sidebar.selectbox("Marital Status", ["Single", "Married", "Divorced", "Unmarried"])
-        trips = st.sidebar.number_input("Annual Trips", 0, 30, 3)
-        passport = st.sidebar.selectbox("Passport Owned", [0, 1])
-        pitch_score = st.sidebar.slider("Pitch Score", 1, 5, 3)
-        own_car = st.sidebar.selectbox("Owns Car", [0, 1])
-        children = st.sidebar.slider("Children Visiting", 0, 5, 0)
-        designation = st.sidebar.selectbox("Designation", ["Executive", "Manager", "Senior Manager", "AVP", "VP"])
-        income = st.sidebar.number_input("Monthly Income ($)", 1000, 100000, 25000)
+st.sidebar.header("Customer Profile Input")
+age = st.sidebar.number_input("Age", min_value=18, max_value=100, value=35)
+type_of_contact = st.sidebar.selectbox("Type of Contact", ["Self Inquiry", "Company Invited"])
+city_tier = st.sidebar.selectbox("City Tier", [1, 2, 3])
+duration_pitch = st.sidebar.number_input("Pitch Duration (mins)", min_value=1, max_value=120, value=15)
+occupation = st.sidebar.selectbox("Occupation", ["Salaried", "Small Business", "Large Business", "Free Lancer"])
+gender = st.sidebar.selectbox("Gender", ["Male", "Female"])
+person_visiting = st.sidebar.slider("Persons Visiting", 1, 10, 2)
+followups = st.sidebar.slider("Follow-ups", 1, 10, 3)
+product_pitched = st.sidebar.selectbox("Product Pitched", ["Basic", "Standard", "Deluxe", "Super Deluxe", "King"])
+preferred_star = st.sidebar.selectbox("Preferred Hotel Star", [3, 4, 5])
+marital_status = st.sidebar.selectbox("Marital Status", ["Single", "Married", "Divorced", "Unmarried"])
+trips = st.sidebar.number_input("Annual Trips", min_value=0, max_value=50, value=3)
 
-        data = {
-            'Age': age, 'TypeofContact': typeofcontact, 'CityTier': citytier,
-            'DurationOfPitch': duration, 'Occupation': occupation, 'Gender': gender,
-            'NumberOfPersonVisiting': persons, 'NumberOfFollowups': followups,
-            'ProductPitched': product_pitched, 'PreferredPropertyStar': preferred_star,
-            'MaritalStatus': marital_status, 'NumberOfTrips': trips, 'Passport': passport,
-            'PitchSatisfactionScore': pitch_score, 'OwnCar': own_car,
-            'NumberOfChildrenVisiting': children, 'Designation': designation,
-            'MonthlyIncome': income
-        }
-        return pd.DataFrame([data])
+input_data = pd.DataFrame([{
+    "Age": age,
+    "TypeofContact": type_of_contact,
+    "CityTier": city_tier,
+    "DurationOfPitch": duration_pitch,
+    "Occupation": occupation,
+    "Gender": gender,
+    "NumberOfPersonVisiting": person_visiting,
+    "NumberOfFollowups": followups,
+    "ProductPitched": product_pitched,
+    "PreferredPropertyStar": preferred_star,
+    "MaritalStatus": marital_status,
+    "NumberOfTrips": trips
+}])
 
-    input_df = user_inputs()
-    st.subheader("Submitted Input Profile")
-    st.dataframe(input_df)
+st.subheader("Submitted Input Profile")
+st.dataframe(input_data)
 
-    if st.button("Predict Likelihood"):
-        pred = model.predict(input_df)[0]
-        prob = model.predict_proba(input_df)[0][1]
-        if pred == 1:
-            st.success(f"🎯 **High Likelihood to Purchase** (Probability: {prob:.1%})")
+if st.button("Predict Likelihood"):
+    try:
+        prediction = model.predict(input_data)
+        probability = model.predict_proba(input_data)[0][1] if hasattr(model, "predict_proba") else None
+        
+        if prediction[0] == 1:
+            st.success(f"🎉 Customer is likely to purchase! (Confidence: {probability:.2%})")
         else:
-            st.error(f"⚠️ **Low Likelihood to Purchase** (Probability: {prob:.1%})")
-
-except Exception as e:
-    st.error(f"Error loading model: {e}")
+            st.warning(f"❌ Customer is unlikely to purchase. (Confidence: {1 - probability:.2%})")
+    except Exception as e:
+        st.error(f"Error predicting outcome: {e}")
