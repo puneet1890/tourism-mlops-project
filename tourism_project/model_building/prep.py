@@ -8,6 +8,10 @@ def prepare_data():
     # 2. Remove unnecessary identifier column
     if "CustomerID" in df.columns:
         df = df.drop(columns=["CustomerID"])
+
+    # Drop index column if present
+    if "Unnamed: 0" in df.columns:
+        df = df.drop(columns=["Unnamed: 0"])
         
     # Standardize categorical typo if present
     if "Gender" in df.columns:
